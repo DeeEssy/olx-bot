@@ -4,6 +4,7 @@ import logging
 from aiogram import Bot
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
 
+from bot.currency import fetch_usd_rate
 from bot.db import Database
 from bot.filters import ParsedAd, matches, parse_ad
 from bot.formatter import format_message
@@ -15,7 +16,14 @@ logger = logging.getLogger("olx-bot")
 MAX_ALBUM_PHOTOS = 10
 
 
-async def send_ad(bot: Bot, chat_id: str, parsed: ParsedAd, title_label: str, show_pets: bool) -> None:
+async def send_ad(
+    bot: Bot,
+    chat_id: str,
+    parsed: ParsedAd,
+    title_label: str,
+    show_pets: bool,
+    price_usd: float | None,
+) -> None:
     photos = parsed.photos[:MAX_ALBUM_PHOTOS]
 
     if photos:
@@ -31,7 +39,7 @@ async def send_ad(bot: Bot, chat_id: str, parsed: ParsedAd, title_label: str, sh
 
     await bot.send_message(
         chat_id=chat_id,
-        text=format_message(parsed, title_label=title_label, show_pets=show_pets),
+        text=format_message(parsed, title_label=title_label, show_pets=show_pets, price_usd=price_usd),
         reply_markup=keyboard,
         disable_web_page_preview=True,
     )
@@ -46,6 +54,12 @@ async def run_feed(bot: Bot, db: Database, feed: FeedConfig, city_slug: str, pag
     ads = await fetch_listings(city_slug, feed.category_path, pages_to_scan)
     logger.info("[%s] Fetched %d ads", feed.key, len(ads))
 
+    usd_rate: float | None = None
+    if feed.currency == "USD":
+        usd_rate = await fetch_usd_rate()
+        if usd_rate is None:
+            logger.warning("[%s] Could not fetch USD rate, falling back to UAH prices", feed.key)
+
     show_pets = feed.key == "rental"
     sent = 0
     for raw_ad in ads:
@@ -57,7 +71,8 @@ async def run_feed(bot: Bot, db: Database, feed: FeedConfig, city_slug: str, pag
         if not matches(parsed, feed):
             continue
 
-        await send_ad(bot, feed.chat_id, parsed, feed.title_label, show_pets)
+        price_usd = parsed.price_value / usd_rate if usd_rate and parsed.price_value else None
+        await send_ad(bot, feed.chat_id, parsed, feed.title_label, show_pets, price_usd)
         db.mark_notified(feed.key, parsed.id)
         sent += 1
         await asyncio.sleep(1.5)  # avoid hitting Telegram rate limits

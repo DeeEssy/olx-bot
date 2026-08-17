@@ -42,6 +42,7 @@ jobs:
           SALE_ROOMS: ${{ vars.SALE_ROOMS }}
           SALE_OWNER_TYPE: ${{ vars.SALE_OWNER_TYPE }}
           SALE_MAX_AGE_DAYS: ${{ vars.SALE_MAX_AGE_DAYS }}
+          SALE_CURRENCY: ${{ vars.SALE_CURRENCY }}
           DB_PATH: data/state.db
         run: python run_once.py
 

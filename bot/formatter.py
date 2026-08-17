@@ -68,14 +68,25 @@ def _clean_description(description: str) -> str:
     return text.strip()
 
 
-def format_message(parsed: ParsedAd, title_label: str = "Оренда", show_pets: bool = True) -> str:
+def _price_line(parsed: ParsedAd, price_usd: float | None) -> str:
+    if price_usd is not None:
+        return f"💰 ${price_usd:,.0f} (≈ {parsed.price_display}, курс НБУ)"
+    return f"💰 {parsed.price_display}"
+
+
+def format_message(
+    parsed: ParsedAd,
+    title_label: str = "Оренда",
+    show_pets: bool = True,
+    price_usd: float | None = None,
+) -> str:
     description = _clean_description(parsed.description)
     if len(description) > DESCRIPTION_LIMIT:
         description = description[:DESCRIPTION_LIMIT].rstrip() + "..."
 
     lines = [
         _title_line(parsed, title_label),
-        f"💰 {parsed.price_display}",
+        _price_line(parsed, price_usd),
         f"📍 Район: {parsed.district or 'не вказано'}",
         f"🏢 Поверх: {_floor_line(parsed)}",
     ]

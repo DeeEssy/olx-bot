@@ -53,6 +53,7 @@ class FeedConfig:
     pets_only: bool = False
     owner_type: str = "any"  # any / agency / private
     max_age_days: int | None = 3
+    currency: str = "UAH"  # UAH / USD - display currency for the price line
 
     @property
     def enabled(self) -> bool:
@@ -86,6 +87,7 @@ def _sale_feed() -> FeedConfig:
         pets_only=False,
         owner_type=_str_or_default(os.getenv("SALE_OWNER_TYPE"), "any"),
         max_age_days=_max_age_days(os.getenv("SALE_MAX_AGE_DAYS")),
+        currency=_str_or_default(os.getenv("SALE_CURRENCY"), "USD"),
     )
 
 

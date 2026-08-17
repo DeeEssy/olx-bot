@@ -59,6 +59,12 @@ py -m pip install -r requirements.txt
    `TELEGRAM_CHAT_ID_SALE`, `SALE_PRICE_MIN/MAX`, `SALE_ROOMS`,
    `SALE_OWNER_TYPE`, `SALE_MAX_AGE_DAYS`. Якщо `TELEGRAM_CHAT_ID_SALE`
    лишити порожнім — потік продажу просто вимкнений.
+
+   OLX показує ціни продажу лише в грн, тому потік продажу за замовчуванням
+   (`SALE_CURRENCY=USD`) сам конвертує ціну в долари за офіційним курсом
+   НБУ (безкоштовний публічний API bank.gov.ua) і показує обидва значення:
+   `💰 $55,357 (≈ 2 474 101.98 грн., курс НБУ)`. Постав `SALE_CURRENCY=UAH`,
+   щоб показувати як є, без конвертації.
 4. Запусти бота (`py main.py`) і напиши йому в Telegram що завгодно — він
    відповість твоїм `chat_id`. Встав це значення в `TELEGRAM_CHAT_ID` в
    `.env` і перезапусти бота.
@@ -125,7 +131,7 @@ GitHub може затримувати cron на кілька хвилин пі�
      - `MAX_AGE_DAYS` (необов'язково, за замовчуванням 3)
      - Для потоку продажу (необов'язково, вимкнено якщо `TELEGRAM_CHAT_ID_SALE`
        порожній): `TELEGRAM_CHAT_ID_SALE`, `SALE_PRICE_MIN`, `SALE_PRICE_MAX`,
-       `SALE_ROOMS`, `SALE_OWNER_TYPE`, `SALE_MAX_AGE_DAYS`
+       `SALE_ROOMS`, `SALE_OWNER_TYPE`, `SALE_MAX_AGE_DAYS`, `SALE_CURRENCY`
 3. Вкладка **Actions** у репозиторії → workflow "OLX bot poll" → **Run
    workflow**, щоб перевірити вручну, не чекаючи розкладу.
 
