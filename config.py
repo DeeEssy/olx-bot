@@ -34,6 +34,13 @@ def _bool(value: str | None) -> bool:
     return (value or "").strip().lower() in ("1", "true", "yes", "y")
 
 
+def _max_age_days(value: str | None) -> int | None:
+    if value is None or value.strip() == "":
+        return 3
+    parsed = int(value)
+    return parsed if parsed > 0 else None
+
+
 @dataclass
 class Config:
     bot_token: str = os.getenv("TELEGRAM_BOT_TOKEN", "")
@@ -50,6 +57,11 @@ class Config:
 
     poll_interval_seconds: int = field(default_factory=lambda: _int_or_default(os.getenv("POLL_INTERVAL_SECONDS"), 300))
     pages_to_scan: int = field(default_factory=lambda: _int_or_default(os.getenv("PAGES_TO_SCAN"), 3))
+
+    # Only notify about ads created within this many days (OLX sellers can
+    # "bump" old ads to the top of search results without a fresh createdTime).
+    # Set MAX_AGE_DAYS=0 to disable this filter entirely.
+    max_age_days: int | None = field(default_factory=lambda: _max_age_days(os.getenv("MAX_AGE_DAYS")))
 
     db_path: str = field(default_factory=lambda: _str_or_default(os.getenv("DB_PATH"), "data/olx_bot.db"))
 

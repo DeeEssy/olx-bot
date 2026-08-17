@@ -1,5 +1,6 @@
 import re
 from dataclasses import dataclass
+from datetime import datetime, timezone
 
 from config import Config
 
@@ -72,7 +73,27 @@ def parse_ad(ad: dict) -> ParsedAd:
     )
 
 
+def _age_days(created_time: str) -> float | None:
+    if not created_time:
+        return None
+    try:
+        created = datetime.fromisoformat(created_time)
+    except ValueError:
+        return None
+    if created.tzinfo is None:
+        created = created.replace(tzinfo=timezone.utc)
+    return (datetime.now(timezone.utc) - created).total_seconds() / 86400
+
+
 def matches(parsed: ParsedAd, config: Config) -> bool:
+    if config.max_age_days is not None:
+        age = _age_days(parsed.created_time)
+        # OLX sellers can "bump" old ads back to the top of search results
+        # without changing createdTime, so an unparsable/missing date is
+        # treated as suspect and filtered out rather than let through.
+        if age is None or age > config.max_age_days:
+            return False
+
     if config.price_min is not None:
         if parsed.price_value is None or parsed.price_value < config.price_min:
             return False
