@@ -1,0 +1,65 @@
+name: Test OLX access
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: curl version / TLS backend
+        run: curl --version
+
+      - name: Plain curl request
+        run: |
+          echo "--- plain curl ---"
+          code=$(curl -s -o /tmp/curl_out.html -w "%{http_code}" \
+            -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" \
+            "https://www.olx.ua/uk/nedvizhimost/kvartiry/dolgosrochnaya-arenda-kvartir/kiev/")
+          echo "HTTP status: $code"
+          echo "bytes: $(wc -c < /tmp/curl_out.html)"
+          if grep -q "__PRERENDERED_STATE__" /tmp/curl_out.html; then
+            echo "RESULT: plain curl -> PASSED (found PRERENDERED_STATE)"
+          else
+            echo "RESULT: plain curl -> BLOCKED"
+            head -c 500 /tmp/curl_out.html
+          fi
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Plain Python requests (baseline, expected to fail)
+        run: |
+          pip install requests --quiet
+          python - <<'EOF'
+          import requests
+          headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
+          try:
+              r = requests.get("https://www.olx.ua/uk/nedvizhimost/kvartiry/dolgosrochnaya-arenda-kvartir/kiev/", headers=headers, timeout=30)
+              print("HTTP status:", r.status_code)
+              found = "__PRERENDERED_STATE__" in r.text
+              print("RESULT: python requests ->", "PASSED" if found and r.status_code == 200 else "BLOCKED")
+          except Exception as e:
+              print("RESULT: python requests -> ERROR", e)
+          EOF
+
+      - name: curl_cffi (Chrome TLS impersonation)
+        run: |
+          pip install curl_cffi --quiet
+          python - <<'EOF'
+          from curl_cffi import requests
+          headers = {"Accept-Language": "uk-UA,uk;q=0.9,ru;q=0.8,en;q=0.7"}
+          for impersonate in ["chrome120", "chrome124", "chrome131"]:
+              try:
+                  r = requests.get(
+                      "https://www.olx.ua/uk/nedvizhimost/kvartiry/dolgosrochnaya-arenda-kvartir/kiev/",
+                      headers=headers, impersonate=impersonate, timeout=30,
+                  )
+                  found = "__PRERENDERED_STATE__" in r.text
+                  print(f"[{impersonate}] HTTP status: {r.status_code}  len={len(r.text)}")
+                  print(f"RESULT: curl_cffi[{impersonate}] ->", "PASSED" if found and r.status_code == 200 else "BLOCKED")
+              except Exception as e:
+                  print(f"RESULT: curl_cffi[{impersonate}] -> ERROR", e)
+          EOF
