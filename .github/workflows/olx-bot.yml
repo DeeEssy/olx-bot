@@ -35,6 +35,7 @@ jobs:
           PETS_ONLY: ${{ vars.PETS_ONLY }}
           OWNER_TYPE: ${{ vars.OWNER_TYPE }}
           PAGES_TO_SCAN: ${{ vars.PAGES_TO_SCAN }}
+          MAX_AGE_DAYS: ${{ vars.MAX_AGE_DAYS }}
           DB_PATH: data/state.db
         run: python run_once.py
 
