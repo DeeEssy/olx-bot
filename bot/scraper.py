@@ -7,7 +7,7 @@ from curl_cffi import requests as curl_requests
 
 logger = logging.getLogger(__name__)
 
-BASE_URL = "https://www.olx.ua/uk/nedvizhimost/kvartiry/dolgosrochnaya-arenda-kvartir/{city}/"
+BASE_URL = "https://www.olx.ua/uk/nedvizhimost/kvartiry/{category}/{city}/"
 
 # OLX sits behind a CloudFront bot-protection layer that fingerprints the TLS
 # handshake (JA3/JA4-style). Plain Python HTTP clients (requests, aiohttp,
@@ -64,8 +64,8 @@ def _extract_ads(html: str) -> list[dict]:
     return listing["listing"].get("ads", [])
 
 
-async def fetch_page(city_slug: str, page: int) -> list[dict]:
-    url = BASE_URL.format(city=city_slug)
+async def fetch_page(city_slug: str, category_path: str, page: int) -> list[dict]:
+    url = BASE_URL.format(category=category_path, city=city_slug)
     if page > 1:
         url = f"{url}?page={page}"
 
@@ -76,12 +76,12 @@ async def fetch_page(city_slug: str, page: int) -> list[dict]:
     return _extract_ads(html)
 
 
-async def fetch_listings(city_slug: str, pages: int) -> list[dict]:
+async def fetch_listings(city_slug: str, category_path: str, pages: int) -> list[dict]:
     ads: list[dict] = []
     seen_ids: set[int] = set()
 
     for page in range(1, pages + 1):
-        page_ads = await fetch_page(city_slug, page)
+        page_ads = await fetch_page(city_slug, category_path, page)
         if not page_ads:
             break
         for ad in page_ads:

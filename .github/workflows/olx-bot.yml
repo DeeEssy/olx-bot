@@ -36,6 +36,12 @@ jobs:
           OWNER_TYPE: ${{ vars.OWNER_TYPE }}
           PAGES_TO_SCAN: ${{ vars.PAGES_TO_SCAN }}
           MAX_AGE_DAYS: ${{ vars.MAX_AGE_DAYS }}
+          TELEGRAM_CHAT_ID_SALE: ${{ vars.TELEGRAM_CHAT_ID_SALE }}
+          SALE_PRICE_MIN: ${{ vars.SALE_PRICE_MIN }}
+          SALE_PRICE_MAX: ${{ vars.SALE_PRICE_MAX }}
+          SALE_ROOMS: ${{ vars.SALE_ROOMS }}
+          SALE_OWNER_TYPE: ${{ vars.SALE_OWNER_TYPE }}
+          SALE_MAX_AGE_DAYS: ${{ vars.SALE_MAX_AGE_DAYS }}
           DB_PATH: data/state.db
         run: python run_once.py
 

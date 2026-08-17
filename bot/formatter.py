@@ -55,9 +55,9 @@ def _floor_line(parsed: ParsedAd) -> str:
     return "не вказано"
 
 
-def _title_line(parsed: ParsedAd) -> str:
+def _title_line(parsed: ParsedAd, title_label: str) -> str:
     if parsed.rooms:
-        return f"🏠 Оренда {parsed.rooms}кімнатної квартири"
+        return f"🏠 {title_label} {parsed.rooms}кімнатної квартири"
     return f"🏠 {parsed.title}"
 
 
@@ -68,17 +68,20 @@ def _clean_description(description: str) -> str:
     return text.strip()
 
 
-def format_message(parsed: ParsedAd) -> str:
+def format_message(parsed: ParsedAd, title_label: str = "Оренда", show_pets: bool = True) -> str:
     description = _clean_description(parsed.description)
     if len(description) > DESCRIPTION_LIMIT:
         description = description[:DESCRIPTION_LIMIT].rstrip() + "..."
 
     lines = [
-        _title_line(parsed),
+        _title_line(parsed, title_label),
         f"💰 {parsed.price_display}",
         f"📍 Район: {parsed.district or 'не вказано'}",
         f"🏢 Поверх: {_floor_line(parsed)}",
-        f"🐾 Тварини: {_pets_line(parsed)}",
+    ]
+    if show_pets:
+        lines.append(f"🐾 Тварини: {_pets_line(parsed)}")
+    lines += [
         f"👤 Хазяїн: {_owner_line(parsed)}",
         f"🕒 Додано: {_format_date(parsed.created_time)}",
         f"⚠️ Доплата: {_deposit_guess(parsed.description)}",

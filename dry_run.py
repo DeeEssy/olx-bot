@@ -1,5 +1,5 @@
-"""Fetch OLX listings and print how many match the current .env filters,
-without sending anything to Telegram. Useful for tuning filters."""
+"""Fetch OLX listings for every configured feed and print how many match
+its filters, without sending anything to Telegram. Useful for tuning filters."""
 import asyncio
 import sys
 
@@ -13,17 +13,22 @@ if sys.platform == "win32":
 
 
 async def main():
-    ads = await fetch_listings(config.city_slug, config.pages_to_scan)
-    print(f"Знайдено оголошень на сторінках: {len(ads)}")
+    for feed in config.feeds:
+        print("#" * 50)
+        print(f"feed={feed.key} enabled={feed.enabled} chat_id={feed.chat_id or '(not set)'}")
 
-    matched = [parse_ad(raw) for raw in ads]
-    matched = [p for p in matched if matches(p, config)]
-    print(f"Проходять поточні фільтри: {len(matched)}")
+        ads = await fetch_listings(config.city_slug, feed.category_path, config.pages_to_scan)
+        print(f"Знайдено оголошень на сторінках: {len(ads)}")
 
-    for parsed in matched[:3]:
-        print("=" * 40)
-        print(format_message(parsed))
-        print(f"photos: {len(parsed.photos)}  url: {parsed.url}")
+        parsed_list = [parse_ad(raw) for raw in ads]
+        matched = [p for p in parsed_list if matches(p, feed)]
+        print(f"Проходять поточні фільтри: {len(matched)}")
+
+        show_pets = feed.key == "rental"
+        for parsed in matched[:2]:
+            print("=" * 40)
+            print(format_message(parsed, title_label=feed.title_label, show_pets=show_pets))
+            print(f"photos: {len(parsed.photos)}  url: {parsed.url}")
 
 
 asyncio.run(main())
