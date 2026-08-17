@@ -19,8 +19,8 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(na
 async def main() -> None:
     if not config.bot_token:
         raise SystemExit("TELEGRAM_BOT_TOKEN is not set")
-    if not config.chat_id:
-        raise SystemExit("TELEGRAM_CHAT_ID is not set")
+    if not any(feed.enabled for feed in config.feeds):
+        raise SystemExit("No feed has a chat_id configured (TELEGRAM_CHAT_ID / TELEGRAM_CHAT_ID_SALE)")
 
     bot = Bot(token=config.bot_token)
     db = Database(config.db_path)
